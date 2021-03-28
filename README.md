@@ -1,1 +1,1 @@
-pip install my fat bbc
+pip install requirements.txt
