@@ -1,0 +1,5 @@
+beautifulsoup4==4.9.3
+pygooglenews==0.1.2
+FedTools
+tqdm
+selenium
