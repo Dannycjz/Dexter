@@ -3,3 +3,5 @@ pygooglenews==0.1.2
 FedTools
 tqdm
 pandas
+nltk
+scikit-learn
