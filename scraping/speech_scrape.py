@@ -8,7 +8,7 @@ from FedTools import MonetaryPolicyCommittee
 
 
 def scrape_fed_statements():
-    DO_SCRAPE = True
+    DO_SCRAPE = False
     if DO_SCRAPE:
         FOMC = MonetaryPolicyCommittee(
             historical_split=2014,
@@ -85,8 +85,8 @@ def scrape_powell_speeches():
             print(text)
 
             article_dict = {
-                "speaker": "powell",
                 "date": F"{line[0:8]}",
+                "speaker": "powell",
                 "url": url,
                 "title": soup.find("h3", class_="title").string,
                 "content": text
@@ -116,5 +116,5 @@ def format_dates():
 
 
 if __name__ == '__main__':
-    # scrape_powell_speeches()
-    scrape_fed_statements()
+    scrape_powell_speeches()
+    # scrape_fed_statements()
