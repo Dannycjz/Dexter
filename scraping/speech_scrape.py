@@ -18,9 +18,9 @@ def scrape_fed_statements():
         data = FOMC.find_statements()
 
         data.info()
-        data.to_pickle("scraping/FOMC_statements.pkl")
+        data.to_pickle("dataset/FOMC_statements.pkl")
 
-    data = pd.read_pickle("scraping/FOMC_statements.pkl")
+    data = pd.read_pickle("dataset/FOMC_statements.pkl")
 
     for i in data.index:
         d = pd.to_datetime(i)
@@ -29,9 +29,9 @@ def scrape_fed_statements():
 
     data.info()
 
-    print(data["FOMC_Statements"][0])
+    print(data["dataset/FOMC_Statements"][0])
 
-    data.to_pickle("scraping/FOMC_statements.pkl")
+    data.to_pickle("dataset/FOMC_statements.pkl")
 
 
 def scrape_powell_speeches():
@@ -94,7 +94,7 @@ def scrape_powell_speeches():
 
             data_list.append(article_dict)
 
-    with open("scraping/powell_data.json", "w") as outfile:
+    with open("dataset/powell_data.json", "w") as outfile:
         json.dump(data_list, outfile)
 
     return 0
