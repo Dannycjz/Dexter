@@ -1,14 +1,40 @@
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
-from urllib import error as url_e
-import requests
-import re
-from datetime import datetime
-from tqdm import tqdm
 import json
+import datetime
+import pickle
+import pandas as pd
+from FedTools import MonetaryPolicyCommittee
 
 
-def main():
+def scrape_fed_statements():
+    DO_SCRAPE = False
+    if DO_SCRAPE:
+        FOMC = MonetaryPolicyCommittee(
+            historical_split=2014,
+            verbose=True,
+            thread_num=10)
+
+        data = FOMC.find_statements()
+
+        data.info()
+        data.to_pickle("scraping/FOMC_statements.pkl")
+
+    data = pd.read_pickle("scraping/FOMC_statements.pkl")
+
+    for i in data.index:
+        d = pd.to_datetime(i)
+        if d.year < 2013:
+            data = data.drop(i)
+
+    data.info()
+
+    print(data["FOMC_Statements"][0])
+
+    data.to_pickle("scraping/FOMC_statements.pkl")
+
+
+def scrape_powell_speeches():
     data_list = []
     # format_dates()
 
@@ -59,8 +85,8 @@ def main():
             print(text)
 
             article_dict = {
-                "speaker": "powell",
                 "date": F"{line[0:8]}",
+                "speaker": "powell",
                 "url": url,
                 "title": soup.find("h3", class_="title").string,
                 "content": text
@@ -90,4 +116,5 @@ def format_dates():
 
 
 if __name__ == '__main__':
-    main()
+    scrape_powell_speeches()
+    # scrape_fed_statements()
