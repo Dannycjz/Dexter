@@ -1,0 +1,6 @@
+TSLA: 67.02% - BernoulliNB
+TSLA: 67.08% - ComplementNB
+TSLA: 67.63% - MultinomialNB
+TSLA: 65.29% - RandomForestClassifier
+TSLA: 64.51% - LogisticRegression
+TSLA: 63.23% - SGDClassifier

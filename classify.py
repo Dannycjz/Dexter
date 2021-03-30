@@ -30,17 +30,18 @@ classifiers = {
     "BernoulliNB": BernoulliNB(),
     "ComplementNB": ComplementNB(),
     "MultinomialNB": MultinomialNB(),
-    "KNeighborsClassifier": KNeighborsClassifier(),
-    "DecisionTreeClassifier": DecisionTreeClassifier(),
+    # "KNeighborsClassifier": KNeighborsClassifier(),
+    # "DecisionTreeClassifier": DecisionTreeClassifier(),
     "RandomForestClassifier": RandomForestClassifier(),
     "LogisticRegression": LogisticRegression(max_iter=10000),
-    "SGDClassifier":SGDClassifier(),
-    "AdaBoostClassifier": AdaBoostClassifier(),
-    "MLPClassifier": MLPClassifier(max_iter=1000),
+    "SGDClassifier": SGDClassifier(),
+    # "AdaBoostClassifier": AdaBoostClassifier(),
+    # "MLPClassifier": MLPClassifier(max_iter=1000),
 }
 
-STOCK_SYMBOL: str = "SPY"
-TAGS = ["vg", "g", "n", "b", 'vb']  # v = very, g = good, b = bad, n = neutral
+STOCK_SYMBOL: str = "TSLA"
+# TAGS = ["vg", "g", "n", "b", 'vb']  # v = very, g = good, b = bad, n = neutral
+TAGS = ['g', 'b']
 
 
 def classify():
@@ -54,7 +55,7 @@ def classify():
     cv = CountVectorizer(tokenizer=tokens.tokenize, stop_words="english", ngram_range=(1, 2))
 
     print("\nGenerating bag of words:")
-    text_counts = cv.fit_transform(tqdm(data['content']))
+    text_counts = cv.fit_transform(data['content'])
     # tfidf_counts = TfidfTransformer().fit_transform(text_counts)
     print(F"Matrix size: {text_counts.shape}")
 
@@ -70,11 +71,11 @@ def classify():
         y_pred = clf.predict(X_test)
         end = time.time()
 
-        print(f"\nResults: - {name}")
-        print(F"elapsed time: {(end - start) / 60:.3} min")
+        print(f"{name} ({(end - start) / 60:.3} min)")
         accuracy = metrics.accuracy_score(y_test, y_pred)
         print(F"{accuracy:.2%} - {STOCK_SYMBOL}")
-        print(classification_report(y_test, y_pred, target_names=TAGS))
+        # print(classification_report(y_test, y_pred, target_names=TAGS))
+        log_result(name, accuracy, STOCK_SYMBOL)
 
 
 def read_data(stock: Quote):
@@ -96,19 +97,10 @@ def read_data(stock: Quote):
 
         delta = stock.lookup(date1, date2)
 
-        BIG_VAL = 1
-        SMALL_VAL = 0.3
-
-        if delta > BIG_VAL:
+        if delta > 0:
             tag = TAGS[0]
-        elif delta > SMALL_VAL:
-            tag = TAGS[1]
-        elif delta < -1 * BIG_VAL:
-            tag = TAGS[4]
-        elif delta < -1 * SMALL_VAL:
-            tag = TAGS[3]
         else:
-            tag = TAGS[2]
+            tag = TAGS[1]
 
         tags.append(tag)
 
@@ -135,6 +127,11 @@ def read_data(stock: Quote):
         print(F"{data['date'][i]}: {data['tag'][i]}  \t|  {data['title'][i]}")
 
     return data
+
+
+def log_result(clf_name, score, stock_symbol):
+    with open("results.txt", "a") as f:
+        f.write(F"{stock_symbol}: {score:.2%} - {clf_name}\n")
 
 
 if __name__ == '__main__':
