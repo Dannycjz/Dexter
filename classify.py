@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import pandas as pd
+import csv
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.tokenize import RegexpTokenizer
 from sklearn.model_selection import train_test_split
@@ -32,20 +33,20 @@ classifiers = {
     "MultinomialNB": MultinomialNB(),
     # "KNeighborsClassifier": KNeighborsClassifier(),
     # "DecisionTreeClassifier": DecisionTreeClassifier(),
-    "RandomForestClassifier": RandomForestClassifier(),
-    "LogisticRegression": LogisticRegression(max_iter=10000),
-    "SGDClassifier": SGDClassifier(),
+    # "RandomForestClassifier": RandomForestClassifier(),
+    # "LogisticRegression": LogisticRegression(max_iter=10000),
+    # "SGDClassifier": SGDClassifier(),
     # "AdaBoostClassifier": AdaBoostClassifier(),
     # "MLPClassifier": MLPClassifier(max_iter=1000),
 }
 
-STOCK_SYMBOL: str = "TSLA"
+STOCK_SYMBOL = 'NDAQ'
 # TAGS = ["vg", "g", "n", "b", 'vb']  # v = very, g = good, b = bad, n = neutral
 TAGS = ['g', 'b']
 
 
-def classify():
-    stock = Quote(STOCK_SYMBOL, '4. close')
+def classify(stock_symbol):
+    stock = Quote(stock_symbol, '4. close')
     data = read_data(stock)
 
     print("\nTable info")
@@ -56,6 +57,9 @@ def classify():
 
     print("\nGenerating bag of words:")
     text_counts = cv.fit_transform(data['content'])
+
+    text_counts = integrate_db("dataset/master_dict_filtered.csv", data, text_counts, cv)
+
     # tfidf_counts = TfidfTransformer().fit_transform(text_counts)
     print(F"Matrix size: {text_counts.shape}")
 
@@ -65,6 +69,7 @@ def classify():
 
     print("\nTraining Classifier:")
     # trains and predicts for all classifiers
+    highest_score = [0, ""]
     for name, sklearn_clf in classifiers.items():
         start = time.time()
         clf = sklearn_clf.fit(X_train, y_train)
@@ -73,9 +78,44 @@ def classify():
 
         print(f"{name} ({(end - start) / 60:.3} min)")
         accuracy = metrics.accuracy_score(y_test, y_pred)
-        print(F"{accuracy:.2%} - {STOCK_SYMBOL}")
+        # keep track of highest accuracy
+        if accuracy > highest_score[0]:
+            highest_score[0] = accuracy
+            highest_score[1] = name
+
+        print(F"{accuracy:.2%} - {stock_symbol}")
         # print(classification_report(y_test, y_pred, target_names=TAGS))
-        log_result(name, accuracy, STOCK_SYMBOL)
+
+    log_result(highest_score[1], highest_score[0], stock_symbol)
+
+
+def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
+    feature_list = cv.get_feature_names()
+    length = text_counts.shape[0]
+    # translates list of features in dict {word => index}
+    feature_dict = {feature_list[i]: i for i in range(0, len(feature_list))}
+
+    # TODO: make sure textcounts is actually being updated
+    # TODO: somehow integrate with 2 gram words as well
+
+    with open (db_path, 'r') as f:
+        reader = csv.DictReader(f)
+        pbar = tqdm(total=2000)
+
+        for row in reader:
+            for doc_i in range(length):
+                if data['content'][doc_i] == 'g':
+                    if row['Positive'] in feature_dict:
+                        word_i = feature_dict[row['Positive']]
+                        text_counts[doc_i, word_i] *= float(row['Pos Freq'])
+                elif data['content'][doc_i] == 'b':
+                    if row['Negative'] in feature_dict:
+                        word_i = feature_dict[row['Negative']]
+                        text_counts[doc_i, word_i] *= float(row['Neg Freq'])
+            pbar.update(1)
+        pbar.close()
+
+    return text_counts
 
 
 def read_data(stock: Quote):
@@ -135,4 +175,10 @@ def log_result(clf_name, score, stock_symbol):
 
 
 if __name__ == '__main__':
-    classify()
+
+    # classify("JPM")
+
+    tickers = ["PLUG", "NFLX", "XBI", 'AMT', 'SPG']
+    for t in tickers:
+        classify(t)
+

@@ -30,6 +30,8 @@ class Quote():
             except KeyError:
                 datetime_object = datetime.strptime(date1, '%Y-%m-%d')
                 datetime_object -= timedelta(days=1)
+                if datetime_object.year < 2013:
+                    raise Exception("No valid quotes before 2013")
                 date1 = datetime.strftime(datetime_object, '%Y-%m-%d')
 
         date_is_bad = True

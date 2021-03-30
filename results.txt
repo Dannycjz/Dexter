@@ -1,6 +1,20 @@
-TSLA: 67.02% - BernoulliNB
-TSLA: 67.08% - ComplementNB
-TSLA: 67.63% - MultinomialNB
-TSLA: 65.29% - RandomForestClassifier
-TSLA: 64.51% - LogisticRegression
-TSLA: 63.23% - SGDClassifier
+NDAQ: 67.19% - BernoulliNB
+AMZN: 68.58% - ComplementNB
+TSLA: 68.08% - ComplementNB
+SLV: 68.58% - ComplementNB
+XBI: 69.14% - MultinomialNB
+JPM: 68.19% - MultinomialNB
+NFLX: 69.31% - ComplementNB
+PLUG: 70.09% - MultinomialNB
+AMT: 68.42% - BernoulliNB
+SPG: 68.19% - ComplementNB
+
+w/ tf-idf
+PLUG: 68.97% - ComplementNB
+NFLX: 68.53% - ComplementNB
+XBI: 67.47% - BernoulliNB
+
+w/master_dict_integration
+PLUG: 70.09% - MultinomialNB
+NFLX: 69.31% - ComplementNB
+XBI: 69.14% - MultinomialNB
