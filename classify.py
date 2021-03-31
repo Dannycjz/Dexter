@@ -47,17 +47,22 @@ TAGS = ['g', 'b']
 
 
 def classify(stock_symbol):
+    # creates quote object from StockAPI.py
     stock = Quote(stock_symbol, '4. close')
+
+    # tags the speeches by stock quotes
     data = read_data(stock)
 
     print("\nTable info")
     data.info()  # prints table structure to terminal
 
-    tokens = RegexpTokenizer(r'[a-zA-Z]+')
+    tokens = RegexpTokenizer(r'[a-zA-Z]+')  # creates a new tokenizer
+
+    # instantiaes a count vectorizer with pre-processing attributes as below
     cv = CountVectorizer(tokenizer=tokens.tokenize, stop_words="english", ngram_range=(1, 1))
 
     print("\nGenerating bag of words:")
-    text_counts = cv.fit_transform(data['content'])
+    text_counts = cv.fit_transform(data['content'])  # creates a doc-term matrix
 
     text_counts = integrate_db("dataset/master_dict_filtered.csv", data, text_counts, cv)
 
@@ -71,6 +76,7 @@ def classify(stock_symbol):
     print("\nTraining Classifier:")
     # trains and predicts for all classifiers
     highest_score = [0, ""]
+    # trains all classifiers within classifiers dictionary
     for name, sklearn_clf in classifiers.items():
         start = time.time()
         clf = sklearn_clf.fit(X_train, y_train)
@@ -79,7 +85,7 @@ def classify(stock_symbol):
 
         print(f"{name} ({(end - start) / 60:.3} min)")
         accuracy = metrics.accuracy_score(y_test, y_pred)
-        # keep track of highest accuracy
+        # keep track of highest accuracy to be saved
         if accuracy > highest_score[0]:
             highest_score[0] = accuracy
             highest_score[1] = name
@@ -96,25 +102,30 @@ def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
     # translates list of features in dict {word => index}
     feature_dict = {feature_list[i]: i for i in range(0, len(feature_list))}
 
-    lil_tc = sparse.lil_matrix(text_counts)
+    lil_tc = sparse.lil_matrix(text_counts)  # converts text counts from csr matric to lil matrix to increase efficiency
 
     # TODO: make sure textcounts is actually being updated
     # TODO: somehow integrate with 2 gram words as well
 
     with open(db_path, 'r') as f:
         reader = csv.DictReader(f)
-        pbar = tqdm(total=length)
+        pbar = tqdm(total=length)  # makes a new progress bar
 
+        # iterate through all documents
         for doc_i in range(length):
+            # iterate through each word in filtered_master_dict
             for row in reader:
+                # for positive words check if they exist in text_counts' features
                 if data['tag'][doc_i] == 'g':
                     if row['Positive'] != 'empty' and row['Positive'] in feature_dict:
                         word_i = feature_dict[row['Positive']]
+                        # multiplies entry by frequency in master_dict filtered if document is tagged as 'g'
                         lil_tc[doc_i, word_i] *= int(row['Pos Freq'])
                 elif data['tag'][doc_i] == 'b':
                     if row['Negative'] != 'empty' and row['Negative'] in feature_dict:
                         word_i = feature_dict[row['Negative']]
                         lil_tc[doc_i, word_i] *= int(row['Neg Freq'])
+                # modifies all instances of 'Word" in all documents regardless of tag
                 if row['Word'] in feature_dict:
                     word_i = feature_dict[row['Word']]
                     lil_tc[doc_i, word_i] *= int(row['Word Freq'])
@@ -122,7 +133,7 @@ def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
             pbar.update(1)
         pbar.close()
 
-    return sparse.csr_matrix(lil_tc)
+    return sparse.csr_matrix(lil_tc) # converts lil matrix back to csr
 
 
 def read_data(stock: Quote):
@@ -137,22 +148,26 @@ def read_data(stock: Quote):
         m = date_str[4:6]
         d = date_str[6:8]
 
+        # converts date into correct format
         speech_date = datetime.strptime(F"{Y}-{m}-{d}", '%Y-%m-%d')
         date1 = speech_date - timedelta(days=1)
         date1 = datetime.strftime(date1, '%Y-%m-%d')
         date2 = datetime.strftime(speech_date, '%Y-%m-%d')
 
+        # grab stock quotes from dates
         delta = stock.lookup(date1, date2)
 
+        # if negative --> 'b' ...
         if delta > 0:
             tag = TAGS[0]
         else:
             tag = TAGS[1]
 
         tags.append(tag)
-
+    # insert new column into dataframe object
     data.insert(5, "tag", tags, True)
 
+    # tokenize dataframe content into sentences
     sentence_list = []
     for i in range(len(data)):
         sentences = sent_tokenize(data['content'][i])
@@ -164,7 +179,7 @@ def read_data(stock: Quote):
                 'tag': data['tag'][i]
             }
             sentence_list.append(temp_dict)
-
+    # converts list of dictionary into dataframe object
     data = pd.DataFrame(sentence_list)
 
     data.to_pickle("dataset/main_dataset.pkl")
@@ -176,6 +191,7 @@ def read_data(stock: Quote):
     return data
 
 
+# writes results into file
 def log_result(clf_name, score, stock_symbol):
     with open("results.txt", "a") as f:
         f.write(F"{stock_symbol}: {score:.2%} - {clf_name}\n")

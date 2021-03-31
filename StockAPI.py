@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 # Input API Key
 key = API_KEY
 
+
 class Quote():
     def __init__(self, symbol, tp):
         self.symbol = symbol
@@ -29,7 +30,9 @@ class Quote():
                 date_is_bad = False
             except KeyError:
                 datetime_object = datetime.strptime(date1, '%Y-%m-%d')
+                # decrement date until it reaches a valid day
                 datetime_object -= timedelta(days=1)
+                # automatically stop program if stock does not exist before 2013
                 if datetime_object.year < 2013:
                     raise Exception("No valid quotes before 2013")
                 date1 = datetime.strftime(datetime_object, '%Y-%m-%d')
