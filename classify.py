@@ -8,6 +8,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.metrics import classification_report
 from nltk import sent_tokenize
 from tqdm import tqdm
+from scipy import sparse
 
 from sklearn.naive_bayes import (
     BernoulliNB,
@@ -33,7 +34,7 @@ classifiers = {
     "MultinomialNB": MultinomialNB(),
     # "KNeighborsClassifier": KNeighborsClassifier(),
     # "DecisionTreeClassifier": DecisionTreeClassifier(),
-    # "RandomForestClassifier": RandomForestClassifier(),
+    "RandomForestClassifier": RandomForestClassifier(),
     # "LogisticRegression": LogisticRegression(max_iter=10000),
     # "SGDClassifier": SGDClassifier(),
     # "AdaBoostClassifier": AdaBoostClassifier(),
@@ -53,7 +54,7 @@ def classify(stock_symbol):
     data.info()  # prints table structure to terminal
 
     tokens = RegexpTokenizer(r'[a-zA-Z]+')
-    cv = CountVectorizer(tokenizer=tokens.tokenize, stop_words="english", ngram_range=(1, 2))
+    cv = CountVectorizer(tokenizer=tokens.tokenize, stop_words="english", ngram_range=(1, 1))
 
     print("\nGenerating bag of words:")
     text_counts = cv.fit_transform(data['content'])
@@ -95,27 +96,33 @@ def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
     # translates list of features in dict {word => index}
     feature_dict = {feature_list[i]: i for i in range(0, len(feature_list))}
 
+    lil_tc = sparse.lil_matrix(text_counts)
+
     # TODO: make sure textcounts is actually being updated
     # TODO: somehow integrate with 2 gram words as well
 
-    with open (db_path, 'r') as f:
+    with open(db_path, 'r') as f:
         reader = csv.DictReader(f)
-        pbar = tqdm(total=2000)
+        pbar = tqdm(total=length)
 
-        for row in reader:
-            for doc_i in range(length):
-                if data['content'][doc_i] == 'g':
-                    if row['Positive'] in feature_dict:
+        for doc_i in range(length):
+            for row in reader:
+                if data['tag'][doc_i] == 'g':
+                    if row['Positive'] != 'empty' and row['Positive'] in feature_dict:
                         word_i = feature_dict[row['Positive']]
-                        text_counts[doc_i, word_i] *= float(row['Pos Freq'])
-                elif data['content'][doc_i] == 'b':
-                    if row['Negative'] in feature_dict:
+                        lil_tc[doc_i, word_i] *= int(row['Pos Freq'])
+                elif data['tag'][doc_i] == 'b':
+                    if row['Negative'] != 'empty' and row['Negative'] in feature_dict:
                         word_i = feature_dict[row['Negative']]
-                        text_counts[doc_i, word_i] *= float(row['Neg Freq'])
+                        lil_tc[doc_i, word_i] *= int(row['Neg Freq'])
+                if row['Word'] in feature_dict:
+                    word_i = feature_dict[row['Word']]
+                    lil_tc[doc_i, word_i] *= int(row['Word Freq'])
+
             pbar.update(1)
         pbar.close()
 
-    return text_counts
+    return sparse.csr_matrix(lil_tc)
 
 
 def read_data(stock: Quote):
@@ -178,7 +185,7 @@ if __name__ == '__main__':
 
     # classify("JPM")
 
-    tickers = ["PLUG", "NFLX", "XBI", 'AMT', 'SPG']
+    tickers = ["NFLX"]
     for t in tickers:
         classify(t)
 

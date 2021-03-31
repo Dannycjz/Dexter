@@ -18,3 +18,5 @@ w/master_dict_integration
 PLUG: 70.09% - MultinomialNB
 NFLX: 69.31% - ComplementNB
 XBI: 69.14% - MultinomialNB
+PLUG: 70.09% - MultinomialNB
+
