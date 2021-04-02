@@ -7,6 +7,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.metrics import classification_report
 from nltk import sent_tokenize
+from nltk import SklearnClassifier
+from nltk.classify import ClassifierI
+from statistics import mode
 from tqdm import tqdm
 from scipy import sparse
 
@@ -22,6 +25,7 @@ from sklearn.linear_model import (
     LogisticRegression,
     SGDClassifier,
 )
+from sklearn.svm import SVC, LinearSVC, NuSVC
 from sklearn.neural_network import MLPClassifier
 from sklearn import metrics
 import random
@@ -39,6 +43,9 @@ classifiers = {
     # "SGDClassifier": SGDClassifier(),
     # "AdaBoostClassifier": AdaBoostClassifier(),
     # "MLPClassifier": MLPClassifier(max_iter=1000),
+    "SupportVectorClassifier": SVC(),
+    "NuSupportVectorClassifier": NuSVC(),
+    "LinearSupportVectorClassifier": LinearSVC(),
 }
 
 STOCK_SYMBOL = 'NDAQ'
@@ -89,6 +96,27 @@ def classify(stock_symbol):
 
     log_result(highest_score[1], highest_score[0], stock_symbol)
 
+# Voting function to combine classifying algorithms
+def VoteClassifier(ClassifierI): 
+    def __init__(self, *classifiers):
+        self._classifiers = classifiers 
+    
+    def classify(self, features): 
+        votes = []
+        for c in self._classifiers:
+            v = c.classify(features)
+            votes.append(v)
+        return mode(votes)
+
+    def confidence(self, features):
+        votes = []
+        for c in self._classifiers:
+            v = c.classify(features)
+            votes.append(v)
+        
+        choice_votes = votes.count(mode(votes))
+        conf = choice_votes / len(votes)
+        return conf
 
 def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
     feature_list = cv.get_feature_names()
