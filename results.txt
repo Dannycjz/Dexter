@@ -8,6 +8,9 @@ NFLX: 69.31% - ComplementNB
 PLUG: 70.09% - MultinomialNB
 AMT: 68.42% - BernoulliNB
 SPG: 68.19% - ComplementNB
+NFLX: 65.29% - NuSVC
+NFLX: 64.06% - SVC
+NFLX: 64.17% - LinearSVC   
 
 w/ tf-idf
 PLUG: 68.97% - ComplementNB
@@ -20,3 +23,7 @@ NFLX: 69.31% - ComplementNB
 XBI: 69.14% - MultinomialNB
 PLUG: 70.09% - MultinomialNB
 
+
+
+NFLX: 68.24776785714286 - VotedClassifier-soft (BernoulliNB, ComplementNB, MultinomialNB, KNeighborsClassifier, LogisticRegression, MLPClassifier)
+NFLX: 66.68526785714286 - VotedClassifier-hard (BernoulliNB, ComplementNB, MultinomialNB, KNeighborsClassifier, LogisticRegression, MLPClassifier)

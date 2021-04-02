@@ -6,12 +6,12 @@ from nltk.tokenize import RegexpTokenizer
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.metrics import classification_report
-from nltk import sent_tokenize
-from nltk import SklearnClassifier
+from nltk import sent_tokenize, SklearnClassifier
 from nltk.classify import ClassifierI
 from statistics import mode
 from tqdm import tqdm
 from scipy import sparse
+import nltk
 
 from sklearn.naive_bayes import (
     BernoulliNB,
@@ -20,10 +20,10 @@ from sklearn.naive_bayes import (
 )
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, VotingClassifier
 from sklearn.linear_model import (
     LogisticRegression,
-    SGDClassifier,
+    SGDClassifier
 )
 from sklearn.svm import SVC, LinearSVC, NuSVC
 from sklearn.neural_network import MLPClassifier
@@ -32,21 +32,36 @@ import random
 from StockAPI import Quote
 import time
 
-classifiers = {
-    "BernoulliNB": BernoulliNB(),
-    "ComplementNB": ComplementNB(),
-    "MultinomialNB": MultinomialNB(),
-    # "KNeighborsClassifier": KNeighborsClassifier(),
-    # "DecisionTreeClassifier": DecisionTreeClassifier(),
-    "RandomForestClassifier": RandomForestClassifier(),
-    # "LogisticRegression": LogisticRegression(max_iter=10000),
-    # "SGDClassifier": SGDClassifier(),
-    # "AdaBoostClassifier": AdaBoostClassifier(),
-    # "MLPClassifier": MLPClassifier(max_iter=1000),
-    "SupportVectorClassifier": SVC(),
-    "NuSupportVectorClassifier": NuSVC(),
-    "LinearSupportVectorClassifier": LinearSVC(),
-}
+# classifiers = {
+        # "BernoulliNB": BernoulliNB(),
+        # "ComplementNB": ComplementNB(),
+        # "MultinomialNB": MultinomialNB(),
+        # "KNeighborsClassifier": KNeighborsClassifier(),
+        # "DecisionTreeClassifier": DecisionTreeClassifier(),
+        # "RandomForestClassifier": RandomForestClassifier(),
+        # "LogisticRegression": LogisticRegression(max_iter=1000),
+        # "SGDClassifier": SGDClassifier(),
+        # "AdaBoostClassifier": AdaBoostClassifier(),
+        # "MLPClassifier": MLPClassifier(max_iter=1000),
+        # "SVC": SVC(),
+        # "NuSVC": NuSVC(),
+        # "LinearSVC": LinearSVC(),
+        # }
+
+tuple_classifiers = [("BernoulliNB", BernoulliNB()),
+        ("ComplementNB", ComplementNB()),
+        ("MultinomialNB", MultinomialNB()),
+        ("KNeighborsClassifier", KNeighborsClassifier()),
+        # ("DecisionTreeClassifier", DecisionTreeClassifier()),
+        # ("RandomForestClassifier", RandomForestClassifier()),
+        ("LogisticRegression", LogisticRegression(max_iter=1000)),
+        # ("SGDClassifier", SGDClassifier()),
+        # ("AdaBoostClassifier", AdaBoostClassifier()),
+        ("MLPClassifier", MLPClassifier(max_iter=1000)),
+        # ("SVC", SVC()),
+        # ("NuSVC", NuSVC()),
+        # ("LinearSVC", LinearSVC())
+        ]
 
 STOCK_SYMBOL = 'NDAQ'
 # TAGS = ["vg", "g", "n", "b", 'vb']  # v = very, g = good, b = bad, n = neutral
@@ -66,7 +81,7 @@ def classify(stock_symbol):
     print("\nGenerating bag of words:")
     text_counts = cv.fit_transform(data['content'])
 
-    text_counts = integrate_db("dataset/master_dict_filtered.csv", data, text_counts, cv)
+    # text_counts = integrate_db("dataset/master_dict_filtered.csv", data, text_counts, cv)
 
     # tfidf_counts = TfidfTransformer().fit_transform(text_counts)
     print(F"Matrix size: {text_counts.shape}")
@@ -76,47 +91,33 @@ def classify(stock_symbol):
         text_counts, data['tag'], test_size=0.3, random_state=RANDOM_STATE)
 
     print("\nTraining Classifier:")
+
     # trains and predicts for all classifiers
-    highest_score = [0, ""]
-    for name, sklearn_clf in classifiers.items():
-        start = time.time()
-        clf = sklearn_clf.fit(X_train, y_train)
-        y_pred = clf.predict(X_test)
-        end = time.time()
 
-        print(f"{name} ({(end - start) / 60:.3} min)")
-        accuracy = metrics.accuracy_score(y_test, y_pred)
+    # Voting classifier that combines existing classifying algorithms
+    voting_classifier = VotingClassifier(estimators = tuple_classifiers, voting='hard').fit(X_train, y_train)
+
+    y_pred = voting_classifier.predict(X_test)
+    print("voted classifier accuracy:", metrics.accuracy_score(y_test, y_pred)*100)
+    
+    # highest_score = [0, ""]
+    # for name, sklearn_clf in classifiers.items():
+      #  start = time.time()
+      #  clf = sklearn_clf.fit(X_train, y_train)
+      #  y_pred = clf.predict(X_test)
+      #  end = time.time()
+
+     #  print(f"{name} ({(end - start) / 60:.3} min)")
+     #   accuracy = metrics.accuracy_score(y_test, y_pred)
         # keep track of highest accuracy
-        if accuracy > highest_score[0]:
-            highest_score[0] = accuracy
-            highest_score[1] = name
+     #   if accuracy > highest_score[0]:
+     #       highest_score[0] = accuracy
+     #       highest_score[1] = name
 
-        print(F"{accuracy:.2%} - {stock_symbol}")
+     #   print(F"{accuracy:.2%} - {stock_symbol}")
         # print(classification_report(y_test, y_pred, target_names=TAGS))
 
-    log_result(highest_score[1], highest_score[0], stock_symbol)
-
-# Voting function to combine classifying algorithms
-def VoteClassifier(ClassifierI): 
-    def __init__(self, *classifiers):
-        self._classifiers = classifiers 
-    
-    def classify(self, features): 
-        votes = []
-        for c in self._classifiers:
-            v = c.classify(features)
-            votes.append(v)
-        return mode(votes)
-
-    def confidence(self, features):
-        votes = []
-        for c in self._classifiers:
-            v = c.classify(features)
-            votes.append(v)
-        
-        choice_votes = votes.count(mode(votes))
-        conf = choice_votes / len(votes)
-        return conf
+    # log_result(highest_score[1], highest_score[0], stock_symbol)
 
 def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
     feature_list = cv.get_feature_names()
