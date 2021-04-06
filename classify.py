@@ -31,6 +31,9 @@ from sklearn import metrics
 import random
 from StockAPI import Quote
 import time
+from StopWords_Generic import stopwords
+
+stopwords = stopwords
 
 # classifiers = {
         # "BernoulliNB": BernoulliNB(),
@@ -76,12 +79,12 @@ def classify(stock_symbol):
     data.info()  # prints table structure to terminal
 
     tokens = RegexpTokenizer(r'[a-zA-Z]+')
-    cv = CountVectorizer(tokenizer=tokens.tokenize, stop_words="english", ngram_range=(1, 1))
+    cv = CountVectorizer(tokenizer=tokens.tokenize, stop_words=stopwords, ngram_range=(1, 1))
 
     print("\nGenerating bag of words:")
     text_counts = cv.fit_transform(data['content'])
 
-    # text_counts = integrate_db("dataset/master_dict_filtered.csv", data, text_counts, cv)
+    #text_counts = integrate_db("dataset/master_dict_filtered.csv", data, text_counts, cv)
 
     # tfidf_counts = TfidfTransformer().fit_transform(text_counts)
     print(F"Matrix size: {text_counts.shape}")
