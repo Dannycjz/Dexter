@@ -3,12 +3,11 @@ import pickle
 import csv
 from tqdm import tqdm
 # lib
-from nltk.corpus import stopwords
 from nltk.probability import FreqDist
 from nltk.tokenize import word_tokenize
 from nltk import ngrams
-import re
-
+import re 
+from StopWords_Generic import stopwords
 
 def extract_most_common(max_features):
     positive_words = []
@@ -17,7 +16,7 @@ def extract_most_common(max_features):
 
     with open("LM_MasterDict.csv", "r") as m_dict:
         reader = csv.DictReader(m_dict)
-        stop_words = set(stopwords.words('english'))
+        stop_words = stopwords
 
         for row in tqdm(reader):
             if int(row['Positive']) > 0:
