@@ -130,6 +130,7 @@ def classify(stock_symbol):
 def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
     feature_list = cv.get_feature_names()
     length = text_counts.shape[0]
+    
     # translates list of features in dict {word => index}
     feature_dict = {feature_list[i]: i for i in range(0, len(feature_list))}
 
