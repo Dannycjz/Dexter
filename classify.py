@@ -42,9 +42,9 @@ arr = list(range(1,70))
 
 classifiers = {
         # "BernoulliNB": BernoulliNB(alpha = 0.01),
-        # "ComplementNB": ComplementNB(alpha = 0.01, norm = True),
+        "ComplementNB": ComplementNB(alpha = 0.01, norm = True),
         # "MultinomialNB": MultinomialNB(alpha = 0.03),
-        "KNeighborsClassifier": KNeighborsClassifier(algorithm = 'auto', leaf_size = 1, metric = 'euclidean', n_neighbors = 50, p = 1, weights = 'uniform'),
+        # "KNeighborsClassifier": KNeighborsClassifier(algorithm = 'auto', leaf_size = 1, metric = 'euclidean', n_neighbors = 50, p = 1, weights = 'uniform'),
         # "DecisionTreeClassifier": DecisionTreeClassifier(),
         # "RandomForestClassifier": RandomForestClassifier(),
         # "LogisticRegression": LogisticRegression(max_iter=1000),
@@ -57,17 +57,17 @@ classifiers = {
         }
 
 tuple_classifiers = [("BernoulliNB", BernoulliNB(alpha = 0.01)),
-  #      ("ComplementNB", ComplementNB()),
-  #      ("MultinomialNB", MultinomialNB()),
-  #      ("KNeighborsClassifier", KNeighborsClassifier()),
-  #      ("DecisionTreeClassifier", DecisionTreeClassifier()),
-  #      ("RandomForestClassifier", RandomForestClassifier()),
-  #      ("LogisticRegression", LogisticRegression(max_iter=1000)),
-  #      ("SGDClassifier", SGDClassifier(loss='log')),
-  #      ("AdaBoostClassifier", AdaBoostClassifier()),
-  #      ("MLPClassifier", MLPClassifier(max_iter=1000)),
-  #      ("SVC", SVC(probability=True)),
-  #      ("NuSVC", NuSVC(probability=True)),
+        ("ComplementNB", ComplementNB(alpha = 0.01, norm = True)),
+        ("MultinomialNB", MultinomialNB(alpha = 0.03)),
+        ("KNeighborsClassifier", KNeighborsClassifier(algorithm = 'auto', leaf_size = 1, metric = 'euclidean', n_neighbors = 50, p = 1, weights = 'uniform')),
+        ("DecisionTreeClassifier", DecisionTreeClassifier()),
+        ("RandomForestClassifier", RandomForestClassifier()),
+        ("LogisticRegression", LogisticRegression(max_iter=1000)),
+        ("SGDClassifier", SGDClassifier(loss='log')),
+        ("AdaBoostClassifier", AdaBoostClassifier()),
+        ("MLPClassifier", MLPClassifier(max_iter=1000)),
+        ("SVC", SVC(probability=True)),
+        ("NuSVC", NuSVC(probability=True)),
         #("LinearSVC", LinearSVC())
         ]
 
@@ -89,14 +89,14 @@ def classify(stock_symbol):
     print("\nGenerating bag of words:")
     text_counts = cv.fit_transform(data['content'])
 
-    # text_counts = integrate_db("dataset/master_dict_filtered.csv", data, text_counts, cv)
+    text_counts = integrate_db("dataset/master_dict_filtered.csv", data, text_counts, cv)
 
-    tfidf_counts = TfidfVectorizer().fit_transform(data['content'])
+    # tfidf_counts = TfidfVectorizer().fit_transform(data['content'])
     print(F"Matrix size: {text_counts.shape}")
 
     RANDOM_STATE = 123
     X_train, X_test, y_train, y_test = train_test_split(
-        tfidf_counts, data['tag'], test_size=0.3, random_state=RANDOM_STATE)
+        text_counts, data['tag'], test_size=0.3, random_state=RANDOM_STATE)
 
     print("\nTraining Classifier:")
     # trains and predicts for all classifiers
@@ -110,10 +110,9 @@ def classify(stock_symbol):
     highest_score = [0, ""]
     for name, sklearn_clf in classifiers.items():
         start = time.time()
-        clf = sklearn_clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         end = time.time()
-
+ 
         print(f"{name} ({(end - start) / 60:.3} min)")
         accuracy = metrics.accuracy_score(y_test, y_pred)
 
@@ -121,7 +120,7 @@ def classify(stock_symbol):
         if accuracy > highest_score[0]:
             highest_score[0] = accuracy
             highest_score[1] = name
-
+     
         print(F"{accuracy:.2%} - {stock_symbol}")
         print(classification_report(y_test, y_pred, target_names=TAGS))
 
@@ -130,7 +129,7 @@ def classify(stock_symbol):
 def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
     feature_list = cv.get_feature_names()
     length = text_counts.shape[0]
-    
+
     # translates list of features in dict {word => index}
     feature_dict = {feature_list[i]: i for i in range(0, len(feature_list))}
 
@@ -148,14 +147,14 @@ def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
                 if data['tag'][doc_i] == 'g':
                     if row['Positive'] != 'empty' and row['Positive'] in feature_dict:
                         word_i = feature_dict[row['Positive']]
-                        lil_tc[doc_i, word_i] *= int(row['Pos Freq'])
+                        lil_tc[doc_i, word_i] *= int(float(row['Pos Freq']))
                 elif data['tag'][doc_i] == 'b':
                     if row['Negative'] != 'empty' and row['Negative'] in feature_dict:
                         word_i = feature_dict[row['Negative']]
-                        lil_tc[doc_i, word_i] *= int(row['Neg Freq'])
-                if row['Word'] in feature_dict:
-                    word_i = feature_dict[row['Word']]
-                    lil_tc[doc_i, word_i] *= int(row['Word Freq'])
+                        lil_tc[doc_i, word_i] *= int(float(row['Neg Freq']))
+                # if row['Word'] in feature_dict:
+                #     word_i = feature_dict[row['Word']]
+                #     lil_tc[doc_i, word_i] *= int(float(row['Word Freq']))
 
             pbar.update(1)
         pbar.close()
@@ -233,6 +232,8 @@ def search_parameters(sklearn_clf, stock_symbol):
     print("\nGenerating bag of words:")
     text_counts = cv.fit_transform(data['content'])
 
+    text_counts = integrate_db("dataset/master_dict_filtered.csv", data, text_counts, cv)
+
     print(F"Matrix size: {text_counts.shape}")
 
     RANDOM_STATE = 123
@@ -250,18 +251,19 @@ def search_parameters(sklearn_clf, stock_symbol):
     parameters = {
             # 'vect__ngram_range': [(1, 1), (1, 2)],
             'tfidf__use_idf': (True, False),
-            # 'clf__alpha': (1e-2, 1e-3), 
-            'clf__criterion': ('gini', 'entropy'),
-            'clf__splitter': ('best', 'random'), 
-            'clf__max_depth': (None, 1, 5, 10, 20),
-            'clf__min_samples_split': (1, 5, 10, 20),
-            'clf__min_samples_leaf': (1, 5, 10, 20),
-            'clf__min_weight_fraction_leaf':(0.0, 1e-2, 1e-3, 1e-4),
-            'clf__max_features': (None, 'auto', 'sqrt', 'log2', 1, 5, 10, 20), 
-            'clf__random_state': (None, 1, 5, 10, 20), 
-            'clf__max_leaf_nodes': (None, 1, 5, 10, 20), 
-            'clf__min_impurity_decrease': (0.0, 1e-2, 1e-3, 1e-4),
-            'clf__ccp_alpha': (0.0, 1e-2, 1e-3, 1e-4),
+            'clf__alpha': (1e-2, 1e-3, 1e-4), 
+            'clf__norm': (True, False),
+            # 'clf__criterion': ('gini', 'entropy'),
+            # 'clf__splitter': ('best', 'random'), 
+            # 'clf__max_depth': (None, 1, 5, 10, 20),
+            # 'clf__min_samples_split': (1, 5, 10, 20),
+            # 'clf__min_samples_leaf': (1, 5, 10, 20),
+            # 'clf__min_weight_fraction_leaf':(0.0, 1e-2, 1e-3, 1e-4),
+            # 'clf__max_features': (None, 'auto', 'sqrt', 'log2', 1, 5, 10, 20), 
+            # 'clf__random_state': (None, 1, 5, 10, 20), 
+            # 'clf__max_leaf_nodes': (None, 1, 5, 10, 20), 
+            # 'clf__min_impurity_decrease': (0.0, 1e-2, 1e-3, 1e-4),
+            # 'clf__ccp_alpha': (0.0, 1e-2, 1e-3, 1e-4)
             }
 
     # Training Gridsearch classifier
@@ -281,6 +283,6 @@ if __name__ == '__main__':
 
     tickers = ["NFLX"]
     for t in tickers:
-        # classify(t)
-        search_parameters(DecisionTreeClassifier(), t)
+        classify(t)
+        search_parameters(ComplementNB(), t)
 
