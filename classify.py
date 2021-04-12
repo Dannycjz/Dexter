@@ -42,8 +42,8 @@ arr = list(range(1,70))
 
 classifiers = {
         # "BernoulliNB": BernoulliNB(alpha = 0.01),
-        "ComplementNB": ComplementNB(alpha = 0.01, norm = True),
-        # "MultinomialNB": MultinomialNB(alpha = 0.03),
+        # "ComplementNB": ComplementNB(alpha = 0.01, norm = True),
+        "MultinomialNB": MultinomialNB(alpha = 0.03),
         # "KNeighborsClassifier": KNeighborsClassifier(algorithm = 'auto', leaf_size = 1, metric = 'euclidean', n_neighbors = 50, p = 1, weights = 'uniform'),
         # "DecisionTreeClassifier": DecisionTreeClassifier(),
         # "RandomForestClassifier": RandomForestClassifier(),
@@ -110,6 +110,7 @@ def classify(stock_symbol):
     highest_score = [0, ""]
     for name, sklearn_clf in classifiers.items():
         start = time.time()
+        clf = sklearn_clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         end = time.time()
  
@@ -152,9 +153,6 @@ def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
                     if row['Negative'] != 'empty' and row['Negative'] in feature_dict:
                         word_i = feature_dict[row['Negative']]
                         lil_tc[doc_i, word_i] *= int(float(row['Neg Freq']))
-                # if row['Word'] in feature_dict:
-                #     word_i = feature_dict[row['Word']]
-                #     lil_tc[doc_i, word_i] *= int(float(row['Word Freq']))
 
             pbar.update(1)
         pbar.close()
@@ -284,5 +282,5 @@ if __name__ == '__main__':
     tickers = ["NFLX"]
     for t in tickers:
         classify(t)
-        search_parameters(ComplementNB(), t)
+        # search_parameters(ComplementNB(), t)
 
