@@ -1,13 +1,17 @@
 from datetime import datetime, timedelta
+from numpy.core.numeric import True_
 import pandas as pd
 import csv
+import sklearn
+from sklearn import neighbors
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.tokenize import RegexpTokenizer
 from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer
 from sklearn.metrics import classification_report
-from nltk import sent_tokenize, SklearnClassifier
-from nltk.classify import ClassifierI
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+from nltk import sent_tokenize
 from statistics import mode
 from tqdm import tqdm
 from scipy import sparse
@@ -31,7 +35,9 @@ from sklearn import metrics
 import random
 from StockAPI import Quote
 import time
+from StopWords_Generic import stopwords
 
+<<<<<<< HEAD
 
 classifiers = {
         "BernoulliNB": BernoulliNB(),
@@ -62,6 +68,40 @@ tuple_classifiers = [("BernoulliNB", BernoulliNB()),
         # ("SVC", SVC()),
         # ("NuSVC", NuSVC()),
         # ("LinearSVC", LinearSVC())
+=======
+stopwords = stopwords
+arr = list(range(1,70))
+
+classifiers = {
+        # "BernoulliNB": BernoulliNB(alpha = 0.01),
+        # "ComplementNB": ComplementNB(alpha = 0.01, norm = True),
+        "MultinomialNB": MultinomialNB(alpha = 0.03),
+        # "KNeighborsClassifier": KNeighborsClassifier(algorithm = 'auto', leaf_size = 1, metric = 'euclidean', n_neighbors = 50, p = 1, weights = 'uniform'),
+        # "DecisionTreeClassifier": DecisionTreeClassifier(),
+        # "RandomForestClassifier": RandomForestClassifier(),
+        # "LogisticRegression": LogisticRegression(max_iter=1000),
+        # "SGDClassifier": SGDClassifier(),
+        # "AdaBoostClassifier": AdaBoostClassifier(),
+        # "MLPClassifier": MLPClassifier(max_iter=1000),
+        # "SVC": SVC(),
+        # "NuSVC": NuSVC(),
+        # "LinearSVC": LinearSVC(),
+        }
+
+tuple_classifiers = [("BernoulliNB", BernoulliNB(alpha = 0.01)),
+        ("ComplementNB", ComplementNB(alpha = 0.01, norm = True)),
+        ("MultinomialNB", MultinomialNB(alpha = 0.03)),
+        ("KNeighborsClassifier", KNeighborsClassifier(algorithm = 'auto', leaf_size = 1, metric = 'euclidean', n_neighbors = 50, p = 1, weights = 'uniform')),
+        ("DecisionTreeClassifier", DecisionTreeClassifier()),
+        ("RandomForestClassifier", RandomForestClassifier()),
+        ("LogisticRegression", LogisticRegression(max_iter=1000)),
+        ("SGDClassifier", SGDClassifier(loss='log')),
+        ("AdaBoostClassifier", AdaBoostClassifier()),
+        ("MLPClassifier", MLPClassifier(max_iter=1000)),
+        ("SVC", SVC(probability=True)),
+        ("NuSVC", NuSVC(probability=True)),
+        #("LinearSVC", LinearSVC())
+>>>>>>> 1b157ceb12e94c0a8d0d117166a42bb828622add
         ]
 
 STOCK_SYMBOL = 'PLUG'
@@ -77,14 +117,14 @@ def classify(stock_symbol):
     data.info()  # prints table structure to terminal
 
     tokens = RegexpTokenizer(r'[a-zA-Z]+')
-    cv = CountVectorizer(tokenizer=tokens.tokenize, stop_words="english", ngram_range=(1, 1))
+    cv = CountVectorizer(tokenizer=tokens.tokenize, stop_words=stopwords, ngram_range=(1, 1))
 
     print("\nGenerating bag of words:")
     text_counts = cv.fit_transform(data['content'])
 
-    # text_counts = integrate_db("dataset/master_dict_filtered.csv", data, text_counts, cv)
+    text_counts = integrate_db("dataset/master_dict_filtered.csv", data, text_counts, cv)
 
-    # tfidf_counts = TfidfTransformer().fit_transform(text_counts)
+    # tfidf_counts = TfidfVectorizer().fit_transform(data['content'])
     print(F"Matrix size: {text_counts.shape}")
 
     RANDOM_STATE = 123
@@ -92,16 +132,19 @@ def classify(stock_symbol):
         text_counts, data['tag'], test_size=0.3, random_state=RANDOM_STATE)
 
     print("\nTraining Classifier:")
-
     # trains and predicts for all classifiers
 
     # Voting classifier that combines existing classifying algorithms
-    voting_classifier = VotingClassifier(estimators = tuple_classifiers, voting='hard').fit(X_train, y_train)
+    # voting_classifier = VotingClassifier(estimators = tuple_classifiers, voting='soft').fit(X_train, y_train)
+
 
     y_pred = voting_classifier.predict(X_test)
     print(F"voted classifier accuracy: {metrics.accuracy_score(y_test, y_pred): .2%}")
 
     log_result("voting", metrics.accuracy_score(y_test, y_pred), stock_symbol)
+
+    # y_pred = voting_classifier.predict(X_test)
+
     
     highest_score = [0, ""]
     for name, sklearn_clf in classifiers.items():
@@ -109,6 +152,7 @@ def classify(stock_symbol):
         clf = sklearn_clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         end = time.time()
+
 
         print(f"{name} ({(end - start) / 60:.3} min)")
         accuracy = metrics.accuracy_score(y_test, y_pred)
@@ -121,10 +165,26 @@ def classify(stock_symbol):
 
     # log_result(highest_score[1], highest_score[0], stock_symbol)
 
+ 
+        print(f"{name} ({(end - start) / 60:.3} min)")
+        accuracy = metrics.accuracy_score(y_test, y_pred)
+
+    # keep track of highest accuracy
+        if accuracy > highest_score[0]:
+            highest_score[0] = accuracy
+            highest_score[1] = name
+     
+        print(F"{accuracy:.2%} - {stock_symbol}")
+        print(classification_report(y_test, y_pred, target_names=TAGS))
+
+    log_result(highest_score[1], highest_score[0], stock_symbol)
+
+
 
 def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
     feature_list = cv.get_feature_names()
     length = text_counts.shape[0]
+
     # translates list of features in dict {word => index}
     feature_dict = {feature_list[i]: i for i in range(0, len(feature_list))}
 
@@ -142,14 +202,11 @@ def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
                 if data['tag'][doc_i] == 'g':
                     if row['Positive'] != 'empty' and row['Positive'] in feature_dict:
                         word_i = feature_dict[row['Positive']]
-                        lil_tc[doc_i, word_i] *= int(row['Pos Freq'])
+                        lil_tc[doc_i, word_i] *= int(float(row['Pos Freq']))
                 elif data['tag'][doc_i] == 'b':
                     if row['Negative'] != 'empty' and row['Negative'] in feature_dict:
                         word_i = feature_dict[row['Negative']]
-                        lil_tc[doc_i, word_i] *= int(row['Neg Freq'])
-                if row['Word'] in feature_dict:
-                    word_i = feature_dict[row['Word']]
-                    lil_tc[doc_i, word_i] *= int(row['Word Freq'])
+                        lil_tc[doc_i, word_i] *= int(float(row['Neg Freq']))
 
             pbar.update(1)
         pbar.close()
@@ -212,6 +269,65 @@ def log_result(clf_name, score, stock_symbol):
     with open("results.txt", "a") as f:
         f.write(F"{stock_symbol}: {score:.2%} - {clf_name}\n")
 
+# Searches through classifier parameters to find the best settings
+def search_parameters(sklearn_clf, stock_symbol):
+
+    stock = Quote(stock_symbol, '4. close')
+    data = read_data(stock)
+
+    print("\nTable info")
+    data.info()  # prints table structure to terminal
+
+    tokens = RegexpTokenizer(r'[a-zA-Z]+')
+    cv = CountVectorizer(tokenizer=tokens.tokenize, stop_words=stopwords, ngram_range=(1, 1))
+
+    print("\nGenerating bag of words:")
+    text_counts = cv.fit_transform(data['content'])
+
+    text_counts = integrate_db("dataset/master_dict_filtered.csv", data, text_counts, cv)
+
+    print(F"Matrix size: {text_counts.shape}")
+
+    RANDOM_STATE = 123
+    X_train, X_test, y_train, y_test = train_test_split(
+        text_counts, data['tag'], test_size=0.3, random_state=RANDOM_STATE)
+
+    # Building an integrated pipeline 
+    text_clf = Pipeline([
+            # ('vect', CountVectorizer(tokenizer=tokens.tokenize, stop_words=stopwords)),
+            ('tfidf', TfidfTransformer()),
+            ('clf', sklearn_clf),
+        ])
+
+    # Defines parameters for gridsearch 
+    parameters = {
+            # 'vect__ngram_range': [(1, 1), (1, 2)],
+            'tfidf__use_idf': (True, False),
+            'clf__alpha': (1e-2, 1e-3, 1e-4), 
+            'clf__norm': (True, False),
+            # 'clf__criterion': ('gini', 'entropy'),
+            # 'clf__splitter': ('best', 'random'), 
+            # 'clf__max_depth': (None, 1, 5, 10, 20),
+            # 'clf__min_samples_split': (1, 5, 10, 20),
+            # 'clf__min_samples_leaf': (1, 5, 10, 20),
+            # 'clf__min_weight_fraction_leaf':(0.0, 1e-2, 1e-3, 1e-4),
+            # 'clf__max_features': (None, 'auto', 'sqrt', 'log2', 1, 5, 10, 20), 
+            # 'clf__random_state': (None, 1, 5, 10, 20), 
+            # 'clf__max_leaf_nodes': (None, 1, 5, 10, 20), 
+            # 'clf__min_impurity_decrease': (0.0, 1e-2, 1e-3, 1e-4),
+            # 'clf__ccp_alpha': (0.0, 1e-2, 1e-3, 1e-4)
+            }
+
+    # Training Gridsearch classifier
+    gs_clf = GridSearchCV(text_clf, parameters, cv=5, n_jobs=-1)
+
+    clf = gs_clf.fit(X_train, y_train)
+
+    clf.best_score_
+
+    for param_name in sorted(parameters.keys()):
+        print("%s: %r" % (param_name, clf.best_params_[param_name]))
+
 
 if __name__ == '__main__':
 
@@ -220,4 +336,5 @@ if __name__ == '__main__':
     tickers = ["NFLX"]
     for t in tickers:
         classify(t)
+        # search_parameters(ComplementNB(), t)
 
