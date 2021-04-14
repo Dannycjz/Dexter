@@ -27,3 +27,4 @@ PLUG: 70.09% - MultinomialNB
 
 NFLX: 68.24776785714286 - VotedClassifier-soft (BernoulliNB, ComplementNB, MultinomialNB, KNeighborsClassifier, LogisticRegression, MLPClassifier)
 NFLX: 66.68526785714286 - VotedClassifier-hard (BernoulliNB, ComplementNB, MultinomialNB, KNeighborsClassifier, LogisticRegression, MLPClassifier)
+NFLX: 67.19% - voting

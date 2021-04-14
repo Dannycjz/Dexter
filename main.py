@@ -4,6 +4,7 @@ from pygooglenews import GoogleNews
 def main():
     print("hello world")
 
+
     gn = GoogleNews()
 
     top = gn.top_news()

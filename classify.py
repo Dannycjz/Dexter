@@ -32,38 +32,39 @@ import random
 from StockAPI import Quote
 import time
 
-# classifiers = {
-        # "BernoulliNB": BernoulliNB(),
-        # "ComplementNB": ComplementNB(),
-        # "MultinomialNB": MultinomialNB(),
-        # "KNeighborsClassifier": KNeighborsClassifier(),
-        # "DecisionTreeClassifier": DecisionTreeClassifier(),
-        # "RandomForestClassifier": RandomForestClassifier(),
-        # "LogisticRegression": LogisticRegression(max_iter=1000),
-        # "SGDClassifier": SGDClassifier(),
-        # "AdaBoostClassifier": AdaBoostClassifier(),
-        # "MLPClassifier": MLPClassifier(max_iter=1000),
-        # "SVC": SVC(),
-        # "NuSVC": NuSVC(),
-        # "LinearSVC": LinearSVC(),
-        # }
+
+classifiers = {
+        "BernoulliNB": BernoulliNB(),
+        "ComplementNB": ComplementNB(),
+        "MultinomialNB": MultinomialNB(),
+        "KNeighborsClassifier": KNeighborsClassifier(),
+        "DecisionTreeClassifier": DecisionTreeClassifier(),
+        "RandomForestClassifier": RandomForestClassifier(),
+        "LogisticRegression": LogisticRegression(max_iter=1000),
+        "SGDClassifier": SGDClassifier(),
+        "AdaBoostClassifier": AdaBoostClassifier(),
+        "MLPClassifier": MLPClassifier(max_iter=1000),
+        "SVC": SVC(),
+        "NuSVC": NuSVC(),
+        "LinearSVC": LinearSVC(),
+        }
 
 tuple_classifiers = [("BernoulliNB", BernoulliNB()),
         ("ComplementNB", ComplementNB()),
         ("MultinomialNB", MultinomialNB()),
         ("KNeighborsClassifier", KNeighborsClassifier()),
         # ("DecisionTreeClassifier", DecisionTreeClassifier()),
-        # ("RandomForestClassifier", RandomForestClassifier()),
+        ("RandomForestClassifier", RandomForestClassifier()),
         ("LogisticRegression", LogisticRegression(max_iter=1000)),
         # ("SGDClassifier", SGDClassifier()),
         # ("AdaBoostClassifier", AdaBoostClassifier()),
-        ("MLPClassifier", MLPClassifier(max_iter=1000)),
+        # ("MLPClassifier", MLPClassifier(max_iter=1000)),
         # ("SVC", SVC()),
         # ("NuSVC", NuSVC()),
         # ("LinearSVC", LinearSVC())
         ]
 
-STOCK_SYMBOL = 'NDAQ'
+STOCK_SYMBOL = 'PLUG'
 # TAGS = ["vg", "g", "n", "b", 'vb']  # v = very, g = good, b = bad, n = neutral
 TAGS = ['g', 'b']
 
@@ -98,26 +99,28 @@ def classify(stock_symbol):
     voting_classifier = VotingClassifier(estimators = tuple_classifiers, voting='hard').fit(X_train, y_train)
 
     y_pred = voting_classifier.predict(X_test)
-    print("voted classifier accuracy:", metrics.accuracy_score(y_test, y_pred)*100)
+    print(F"voted classifier accuracy: {metrics.accuracy_score(y_test, y_pred): .2%}")
+
+    log_result("voting", metrics.accuracy_score(y_test, y_pred), stock_symbol)
     
-    # highest_score = [0, ""]
-    # for name, sklearn_clf in classifiers.items():
-      #  start = time.time()
-      #  clf = sklearn_clf.fit(X_train, y_train)
-      #  y_pred = clf.predict(X_test)
-      #  end = time.time()
+    highest_score = [0, ""]
+    for name, sklearn_clf in classifiers.items():
+        start = time.time()
+        clf = sklearn_clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        end = time.time()
 
-     #  print(f"{name} ({(end - start) / 60:.3} min)")
-     #   accuracy = metrics.accuracy_score(y_test, y_pred)
-        # keep track of highest accuracy
-     #   if accuracy > highest_score[0]:
-     #       highest_score[0] = accuracy
-     #       highest_score[1] = name
+        print(f"{name} ({(end - start) / 60:.3} min)")
+        accuracy = metrics.accuracy_score(y_test, y_pred)
+        if accuracy > highest_score[0]:
+            highest_score[0] = accuracy
+            highest_score[1] = name
 
-     #   print(F"{accuracy:.2%} - {stock_symbol}")
-        # print(classification_report(y_test, y_pred, target_names=TAGS))
+        print(F"{accuracy:.2%} - {stock_symbol}")
+        print(classification_report(y_test, y_pred, target_names=TAGS))
 
     # log_result(highest_score[1], highest_score[0], stock_symbol)
+
 
 def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
     feature_list = cv.get_feature_names()
