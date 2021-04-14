@@ -38,7 +38,7 @@ def scrape_powell_speeches():
     data_list = []
     # format_dates()
 
-    with open("scraping/formatted_dates.txt", "r") as f:
+    with open("scraping/powell/formatted_dates.txt", "r") as f:
         for line in f:
             date = line[0:line.find('\n')]
             url = F"https://www.federalreserve.gov/newsevents/speech/powell{date}.htm"
@@ -94,7 +94,7 @@ def scrape_powell_speeches():
 
             data_list.append(article_dict)
 
-    with open("dataset/powell_data.json", "w") as outfile:
+    with open("dataset/Fed/powell_data.json", "w") as outfile:
         json.dump(data_list, outfile)
 
     return 0

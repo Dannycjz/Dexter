@@ -1,13 +1,9 @@
 # system
-import pickle
 import csv
 from tqdm import tqdm
 # lib
-from nltk.probability import FreqDist
-from nltk.tokenize import word_tokenize
-from nltk import ngrams
-import re 
 from StopWords_Generic import stopwords
+
 
 def extract_most_common(max_features):
     positive_words = []

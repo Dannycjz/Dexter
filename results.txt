@@ -1,47 +1,9 @@
-NDAQ: 67.19% - BernoulliNB
-AMZN: 68.58% - ComplementNB
-TSLA: 68.08% - ComplementNB
-SLV: 68.58% - ComplementNB
-XBI: 69.14% - MultinomialNB
-JPM: 68.19% - MultinomialNB
-NFLX: 69.31% - ComplementNB
-PLUG: 70.09% - MultinomialNB
-AMT: 68.42% - BernoulliNB
-SPG: 68.19% - ComplementNB
-NFLX: 65.29% - NuSVC
-NFLX: 64.06% - SVC
-NFLX: 64.17% - LinearSVC   
-
-w/ tf-idf
-PLUG: 68.97% - ComplementNB
-NFLX: 68.53% - ComplementNB
-XBI: 67.47% - BernoulliNB
-NFLX: 67.19% - VotedClassifier-soft everything
-
-
-w/master_dict_integration
-PLUG: 70.09% - MultinomialNB
-NFLX: 69.31% - ComplementNB
-XBI: 69.14% - MultinomialNB
-PLUG: 70.09% - MultinomialNB
-
-w/Optimized parameters
-NFLX: 65.68% - BernoulliNB
-NFLX: 67.13% - ComplementNB
-NFLX: 66.96% - MultinomialNB
-
-
-NFLX: 68.24776785714286 - VotedClassifier-soft (BernoulliNB, ComplementNB, MultinomialNB, KNeighborsClassifier, LogisticRegression, MLPClassifier)
-NFLX: 66.68526785714286 - VotedClassifier-hard (BernoulliNB, ComplementNB, MultinomialNB, KNeighborsClassifier, LogisticRegression, MLPClassifier)
-
-
-
-NFLX: 67.13% - ComplementNB
-NFLX: 50.78% - ComplementNB
-NFLX: 67.13% - ComplementNB
-NFLX: 67.13% - ComplementNB
-NFLX: 62.83% - SGDClassifier
-NFLX: 66.96% - MultinomialNB
-NFLX: 66.96% - MultinomialNB
-NFLX: 47.43% - MultinomialNB
-
+NFLX: 66.78% - MultinomialNB
+PLUG: 66.22% - MultinomialNB
+XBI: 68.47% - MultinomialNB
+NFLX: 65.77% - BernoulliNB
+XBI: 66.22% - BernoulliNB
+PLUG: 68.86% - BernoulliNB
+NFLX: 65.77% - BernoulliNB
+XBI: 66.50% - ComplementNB
+PLUG: 68.86% - BernoulliNB
