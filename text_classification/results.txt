@@ -31,3 +31,5 @@ NFLX: 67.13% - ComplementNB
 NFLX: 66.96% - MultinomialNB
 
 PLUG: 68.92% - ComplementNB
+PLUG: 68.92% - ComplementNB
+PLUG: 68.92% - ComplementNB

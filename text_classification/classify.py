@@ -53,7 +53,7 @@ def classify(stock_symbol):
         # tags the speeches by stock quotes
         # creates quote object from StockAPI.py
         stock = Quote(stock_symbol, '4. close')
-        data = read_data(stock)
+        data = read_data(stock_symbol, stock)
     else:
         data = read_data()
 
@@ -99,7 +99,7 @@ def classify(stock_symbol):
         # print(classification_report(y_test, y_pred, target_names=TAGS))
 
     log_result(highest_score[1], highest_score[0], stock_symbol)
-    pickle.dump(cv, open(F"text_classification/pickles/{highest_score[1]}_{highest_score[0]:.2}.sav", 'wb'))
+    pickle.dump(cv, open(F"text_classification/pickles/{highest_score[1]}_{highest_score[0]:.2%}_{stock_symbol}.sav", 'wb'))
 
 
 def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
@@ -136,7 +136,7 @@ def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
     return sparse.csr_matrix(lil_tc) # converts lil matrix back to csr
 
 
-def read_data(stock: Quote = None):
+def read_data(stock_symbol, stock: Quote = None):
     if DO_GET_QUOTES_FROM_API:
         print("reading speeches...")
         data = pd.read_json("dataset/Fed/powell_data.json")
@@ -183,9 +183,9 @@ def read_data(stock: Quote = None):
         # converts list of dictionary into dataframe object
         data = pd.DataFrame(sentence_list)
 
-        data.to_pickle("dataset/Fed/powell_w_quotes.pkl")
+        data.to_pickle(f"dataset/Fed/powell_{stock_symbol}.pkl")
     else:
-        data = pickle.load(open("dataset/Fed/powell_w_quotes.pkl", 'rb'))
+        data = pickle.load(open(f"dataset/Fed/powell_{stock_symbol}.pkl", 'rb'))
 
     print("\n5 docs:")
     for i in [0, 1000, 2000, 3000, 4000, 5000]:
